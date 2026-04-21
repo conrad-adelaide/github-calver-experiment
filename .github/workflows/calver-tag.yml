@@ -1,0 +1,21 @@
+on:
+  push:
+    branches: [main]
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate and push CalVer tag
+        run: |
+          YY=$(date +%y)
+          MM=$(date +%m)
+          MICRO=$(git tag --list "${YY}.${MM}.*" | wc -l | tr -d ' ')
+          MICRO=$((MICRO + 1))
+          VERSION="${YY}.${MM}.${MICRO}"
+          git tag "$VERSION"
+          git push origin "$VERSION"
