@@ -1,23 +1,36 @@
+name: Auto Release
+
 on:
   push:
     branches: [main]
 
 jobs:
-  tag:
+  auto-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Generate and push CalVer tag
+      - name: Get next version
+        id: next_version
         run: |
           YY=$(date +%y)
           MM=$(date +%m)
           MICRO=$(git tag --list "${YY}.${MM}.*" | wc -l | tr -d ' ')
           MICRO=$((MICRO + 1))
-          VERSION="${YY}.${MM}.${MICRO}"
-          git tag "$VERSION"
-          git push origin "$VERSION"
+          NEW_VERSION="${YY}.${MM}.${MICRO}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "Next version: $NEW_VERSION"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.next_version.outputs.new_version }}
+          name: Release ${{ steps.next_version.outputs.new_version }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
